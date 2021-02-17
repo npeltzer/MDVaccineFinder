@@ -32,7 +32,7 @@ namespace VaccineFinder
             Console.WriteLine("Welcome to the MD Vaccine Finder app!");
 
             Console.Write("Enter the phone number you wish to be contacted at: ");
-            phoneNumber = Console.ReadLine();
+            phoneNumber = Console.ReadLine().Replace(" ","").Replace("-", "").Replace("(", "").Replace(")", "");
 
             Console.WriteLine("Please select your cellphone provider from the list: ");
             Console.WriteLine("\t1) Verizon");
