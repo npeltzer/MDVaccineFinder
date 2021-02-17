@@ -41,75 +41,94 @@ namespace VaccineFinder
 
         private static async Task CallWalgreeensAPI()
         {
-            var walgreensRequest = new WalgreensRequest()
+            try
             {
-                ServiceId = "99",
-                Radius = 25,
-                Position = new Position() { Latitude = latitude, Longitude = longitude },
-                AppointmentAvailability = new AppointmentAvailability() { StartDateTime = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd") }
+                var walgreensRequest = new WalgreensRequest()
+                {
+                    ServiceId = "99",
+                    Radius = 25,
+                    Position = new Position() { Latitude = latitude, Longitude = longitude },
+                    AppointmentAvailability = new AppointmentAvailability() { StartDateTime = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd") }
 
-            };
+                };
 
-            var json = JsonConvert.SerializeObject(walgreensRequest);
-            StringContent sc = new StringContent(json, Encoding.UTF8, "application/json");
+                var json = JsonConvert.SerializeObject(walgreensRequest);
+                StringContent sc = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var result = await client.PostAsync("https://www.walgreens.com/hcschedulersvc/svc/v1/immunizationLocations/availability", sc);
+                var result = await client.PostAsync("https://www.walgreens.com/hcschedulersvc/svc/v1/immunizationLocations/availability", sc);
 
-            var responseText = await result.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<WalgreensResponse>(responseText);
+                var responseText = await result.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<WalgreensResponse>(responseText);
 
-            if (response.AppointmentAvailability)
-                SendMessage("There is a vaccine available at Walgreens!\n https://www.walgreens.com/findcare/vaccination/covid-19/location-screening");
-
+                if (response.AppointmentAvailability)
+                    SendMessage("There is a vaccine available at Walgreens!\n https://www.walgreens.com/findcare/vaccination/covid-19/location-screening");
+            }
+            catch
+            {
+                Console.WriteLine("Call to Walgreens API Failed...");
+            }
         }
 
         private static async Task CallCVSAPI()
         {
-            client.DefaultRequestHeaders.Referrer = new Uri("https://www.cvs.com/immunizations/covid-19-vaccine");
-            var result = await client.GetAsync("https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.MD.json?vaccineinfo");
-
-            var responseText = await result.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<CVSResponse>(responseText);
-            var message = string.Empty;
-            foreach (var city in response?.ResponsePayloadData?.Data?.MD)
+            try
             {
-                if (city.TotalAvailable != "0")
+                client.DefaultRequestHeaders.Referrer = new Uri("https://www.cvs.com/immunizations/covid-19-vaccine");
+                var result = await client.GetAsync("https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.MD.json?vaccineinfo");
+
+                var responseText = await result.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<CVSResponse>(responseText);
+                var message = string.Empty;
+                foreach (var city in response?.ResponsePayloadData?.Data?.MD)
                 {
-                    message = "There are vaccines available at CVS!\n https://www.cvs.com/immunizations/covid-19-vaccine";
-                    break;
+                    if (city.TotalAvailable != "0")
+                    {
+                        message = "There are vaccines available at CVS!\n https://www.cvs.com/immunizations/covid-19-vaccine";
+                        break;
+                    }
                 }
+
+                if (!string.IsNullOrEmpty(message))
+                    SendMessage(message);
             }
-
-            if (!string.IsNullOrEmpty(message))
-                SendMessage(message);
-
+            catch
+            {
+                Console.WriteLine("Call to CVS API Failed...");
+            }
         }
 
         private static async Task CallMdMassVaxAPI()
         {
-            var mssVaxReq = new MdMassVaxRequest()
+            try
             {
-                StartDate = DateTime.Now.ToString("yyyy-MM-dd"),
-                EndDate = DateTime.Now.AddDays(7).ToString("yyyy-MM-dd"),
-                VaccineData = "WyJhMVYzZDAwMDAwMDAyMmdFQUEiXQ==",
-                DoseNumber = 1,
-                Url = "https://massvax.maryland.gov/appointment-select"
-            };
-
-            var json = JsonConvert.SerializeObject(mssVaxReq);
-            StringContent sc = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var result = await client.PostAsync("https://api-massvax.maryland.gov/public/locations/a0Z3d000000C1bOEAS/availability", sc);
-
-            var responseText = await result.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<MdMassVaxResponse>(responseText);
-            foreach (var day in response.Availability)
-            {
-                if (day.Available)
+                var mssVaxReq = new MdMassVaxRequest()
                 {
-                    SendMessage("There is a vaccine available at the Six Flags Mass Vax Location!\n https://massvax.maryland.gov/location-search");
-                    break;
+                    StartDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    EndDate = DateTime.Now.AddDays(7).ToString("yyyy-MM-dd"),
+                    VaccineData = "WyJhMVYzZDAwMDAwMDAyMmdFQUEiXQ==",
+                    DoseNumber = 1,
+                    Url = "https://massvax.maryland.gov/appointment-select"
+                };
+
+                var json = JsonConvert.SerializeObject(mssVaxReq);
+                StringContent sc = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var result = await client.PostAsync("https://api-massvax.maryland.gov/public/locations/a0Z3d000000C1bOEAS/availability", sc);
+
+                var responseText = await result.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<MdMassVaxResponse>(responseText);
+                foreach (var day in response.Availability)
+                {
+                    if (day.Available)
+                    {
+                        SendMessage("There is a vaccine available at the Six Flags Mass Vax Location!\n https://massvax.maryland.gov/location-search");
+                        break;
+                    }
                 }
+            }
+            catch
+            {
+                Console.WriteLine("Call to MD Mass Vax API Failed...");
             }
         }
         private static void SendMessage(string message)
@@ -133,7 +152,15 @@ namespace VaccineFinder
                 Credentials = new NetworkCredential(gmailAddress, gmailPassword),
                 EnableSsl = true,
             };
-            smtpClient.Send(mailMessage);
+            try
+            {
+                smtpClient.Send(mailMessage);
+            }
+            catch
+            {
+                Console.WriteLine("Message failed to send...");
+                Console.WriteLine(message);
+            }
         }
 
 
