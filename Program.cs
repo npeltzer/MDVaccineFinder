@@ -19,7 +19,7 @@ namespace VaccineFinder
         private static float longitude = 0;
 
         private const string gmailAddress = "MdVaccineFinder@gmail.com";
-        private const string gmailPassword = "PASSWORDS";
+        private const string gmailPassword = "PASSWORD";
 
 
 
@@ -106,7 +106,7 @@ namespace VaccineFinder
                 var response = JsonConvert.DeserializeObject<WalgreensResponse>(responseText);
 
                 if (response.AppointmentAvailability)
-                    SendMessage("There is a vaccine available at Walgreens!\n https://www.walgreens.com/findcare/vaccination/covid-19/location-screening");
+                    SendMessage("There may be a vaccine available at Walgreens!\n https://www.walgreens.com/findcare/vaccination/covid-19/location-screening");
             }
             catch
             {
@@ -128,7 +128,7 @@ namespace VaccineFinder
                 {
                     if (city.TotalAvailable != "0")
                     {
-                        message = "There are vaccines available at CVS!\n https://www.cvs.com/immunizations/covid-19-vaccine";
+                        message = "There may be vaccines available at CVS!\n https://www.cvs.com/immunizations/covid-19-vaccine";
                         break;
                     }
                 }
@@ -166,7 +166,7 @@ namespace VaccineFinder
                 {
                     if (day.Available)
                     {
-                        SendMessage("There is a vaccine available at the Six Flags Mass Vax Location!\n https://massvax.maryland.gov/location-search");
+                        SendMessage("There may be a vaccine available at the Six Flags Mass Vax Location!\n https://massvax.maryland.gov/location-search");
                         break;
                     }
                 }
@@ -186,7 +186,7 @@ namespace VaccineFinder
 
                 if (!responseText.Contains("There are currently no COVID-19 vaccine appointments available"))
                 {
-                    SendMessage("There are vaccines available at Giant!\n https://giantfoodsched.rxtouch.com/rbssched/program/covid19/Patient/Advisory");
+                    SendMessage("There may be vaccines available at Giant!\n https://giantfoodsched.rxtouch.com/rbssched/program/covid19/Patient/Advisory");
                 }
 
             }
