@@ -51,7 +51,7 @@ namespace VaccineFinder
 
             while (true)
             {
-                Console.WriteLine("Would you like to send a test Text or start searching? ");
+                Console.WriteLine("Would you like to send a test txt or start searching? ");
                 Console.WriteLine("\t1) Test");
                 Console.WriteLine("\t2) Search");
                 Console.Write("Choice: ");
@@ -59,7 +59,7 @@ namespace VaccineFinder
 
                 if (testChoice == "1")
                 {
-                    SendMessage("This is a test text from the MD Vaccine Search App");
+                    SendMessage("This is a test txt from the MD Vaccine Search App.");
                 }
                 else
                 {
