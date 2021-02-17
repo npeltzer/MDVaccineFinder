@@ -13,29 +13,72 @@ namespace VaccineFinder
     class Program
     {
         private static readonly HttpClient client = new HttpClient();
-        private const string gmailAddress = "YOUR_GMAIL_ADDRESS";
-        private const string gmailPassword = "YOUR_GMAIL_PASSWORD";
-        private const string phoneNumber = "YOUR_CELLPHONE_NUMBER";
+        private static string phoneNumber = "";
+        private static int provider = 0;
+        private static float latitude = 0;
+        private static float longitude = 0;
 
-        //Your Lat and Long
-        private const float latitude = 0;
-        private const float longitude = 0;
+        private const string gmailAddress = "MdVaccineFinder@gmail.com";
+        private const string gmailPassword = "PASSWORD";
+
+
+
 
 
 
 
         static async Task Main(string[] args)
         {
+            Console.WriteLine("Welcome to the MD Vaccine Finder app!");
+
+            Console.Write("Enter the phone number you wish to be contacted at: ");
+            phoneNumber = Console.ReadLine();
+
+            Console.WriteLine("Please select your cellphone provider from the list: ");
+            Console.WriteLine("\t1) Verizon");
+            Console.WriteLine("\t2) AT&T");
+            Console.WriteLine("\t3) Sprint");
+            Console.WriteLine("\t4) TMobile");
+            Console.WriteLine("\t5) Virgin Mobile");
+            Console.WriteLine("\t6) Nextel");
+            Console.WriteLine("\t7) Boost");
+            Console.Write("Provider: ");
+            provider = int.Parse(Console.ReadLine());
+
+            Console.Write("Enter your MD Zip code: ");
+            var zipCode = Console.ReadLine();
+            GetLatAndLongFromZipCode(zipCode);
+
             while (true)
             {
-                Console.WriteLine("Calling Walgreens API...");
-                await CallWalgreeensAPI();
-                Console.WriteLine("Calling CVS API...");
-                await CallCVSAPI();
-                Console.WriteLine("Calling MD Mass Vax API...");
-                await CallMdMassVaxAPI();
-                Thread.Sleep(120000);
-                Console.Clear();
+                Console.WriteLine("Would you like to send a test Text or start searching? ");
+                Console.WriteLine("\t1) Test");
+                Console.WriteLine("\t2) Search");
+                Console.Write("Choice: ");
+                var testChoice = Console.ReadLine();
+
+                if (testChoice == "1")
+                {
+                    SendMessage("This is a test text from the MD Vaccine Search App");
+                }
+                else
+                {
+                    Console.WriteLine("Leave the application running in the background if you wish for it to continually search.");
+                    Console.WriteLine("If you wish to stop searching, close the terminal window.");
+                    Console.WriteLine("Starting to search... ");
+
+                    while (true)
+                    {
+                        Console.WriteLine("Calling Walgreens API...");
+                        await CallWalgreeensAPI();
+                        Console.WriteLine("Calling CVS API...");
+                        await CallCVSAPI();
+                        Console.WriteLine("Calling MD Mass Vax API...");
+                        await CallMdMassVaxAPI();
+                        Thread.Sleep(120000);
+                        Console.Clear();
+                    }
+                }
             }
         }
 
@@ -135,16 +178,38 @@ namespace VaccineFinder
         {
             var mailMessage = new MailMessage();
             mailMessage.From = new MailAddress(gmailAddress);
+            var providerExtension = "";
 
-            //AT&T: ##@txt.att.net
-            //Verizon: ##@vtext.com
-            //Sprint: ##@messaging.sprintpcs.com
-            //TMobile: ##@tmomail.net
-            //Virgin Mobile: ##@vmobl.com
-            //Nextel: ##@messaging.nextel.com
-            //Boost: ##@myboostmobile.com
+            switch (provider)
+            {
+                case 1:
+                    providerExtension = "@vtext.com";
+                    break;
+                case 2:
+                    providerExtension = "@txt.att.net";
+                    break;
+                case 3:
+                    providerExtension = "@messaging.sprintpcs.com";
+                    break;
+                case 4:
+                    providerExtension = "@tmomail.net";
+                    break;
+                case 5:
+                    providerExtension = "@vmobl.com";
+                    break;
+                case 6:
+                    providerExtension = "@messaging.nextel.com";
+                    break;
+                case 7:
+                    providerExtension = "@myboostmobile.com";
+                    break;
+                default:
+                    providerExtension = "";
+                    break;
+            }
 
-            mailMessage.To.Add(new MailAddress(phoneNumber + "@vtext.com"));
+
+            mailMessage.To.Add(new MailAddress(phoneNumber + providerExtension));
             mailMessage.Body = message;
             var smtpClient = new SmtpClient("smtp.gmail.com")
             {
@@ -160,6 +225,24 @@ namespace VaccineFinder
             {
                 Console.WriteLine("Message failed to send...");
                 Console.WriteLine(message);
+            }
+        }
+
+        private static void GetLatAndLongFromZipCode(string zipCode)
+        {
+            try
+            {
+                var result = client.GetAsync("http://api.zippopotam.us/us/"+ zipCode).Result;
+                var responseText = result.Content.ReadAsStringAsync().Result;
+                var response = JsonConvert.DeserializeObject<ZipCodeResponse>(responseText);
+                latitude = float.Parse(response.Places[0].Latitude);
+                longitude = float.Parse(response.Places[0].Longitude);
+
+
+            }
+            catch
+            {
+                Console.WriteLine("Failed to find lat and long for zip code entered please try again.");
             }
         }
 

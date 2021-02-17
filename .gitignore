@@ -6,3 +6,6 @@
 /bin/Debug/net5.0
 /obj
 /VaccineFinder.sln
+/Properties/PublishProfiles
+/bin/Release/net5.0
+/VaccineFinder.csproj.user
