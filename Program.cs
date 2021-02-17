@@ -19,7 +19,7 @@ namespace VaccineFinder
         private static float longitude = 0;
 
         private const string gmailAddress = "MdVaccineFinder@gmail.com";
-        private const string gmailPassword = "PASSWORD";
+        private const string gmailPassword = "PASSWORDS";
 
 
 
@@ -32,7 +32,7 @@ namespace VaccineFinder
             Console.WriteLine("Welcome to the MD Vaccine Finder app!");
 
             Console.Write("Enter the phone number you wish to be contacted at: ");
-            phoneNumber = Console.ReadLine().Replace(" ","").Replace("-", "").Replace("(", "").Replace(")", "");
+            phoneNumber = Console.ReadLine().Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
 
             Console.WriteLine("Please select your cellphone provider from the list: ");
             Console.WriteLine("\t1) Verizon");
@@ -73,6 +73,8 @@ namespace VaccineFinder
                         await CallWalgreeensAPI();
                         Console.WriteLine("Calling CVS API...");
                         await CallCVSAPI();
+                        Console.WriteLine("Calling Giant API...");
+                        await CallGiantAPI();
                         Console.WriteLine("Calling MD Mass Vax API...");
                         await CallMdMassVaxAPI();
                         Thread.Sleep(120000);
@@ -174,6 +176,25 @@ namespace VaccineFinder
                 Console.WriteLine("Call to MD Mass Vax API Failed...");
             }
         }
+        private static async Task CallGiantAPI()
+        {
+            try
+            {
+                var result = await client.GetAsync("https://giantfoodsched.rxtouch.com/rbssched/program/covid19/Patient/Advisory");
+
+                var responseText = await result.Content.ReadAsStringAsync();
+
+                if (!responseText.Contains("There are currently no COVID-19 vaccine appointments available"))
+                {
+                    SendMessage("There are vaccines available at Giant!\n https://giantfoodsched.rxtouch.com/rbssched/program/covid19/Patient/Advisory");
+                }
+
+            }
+            catch
+            {
+                Console.WriteLine("Call to Giant API Failed...");
+            }
+        }
         private static void SendMessage(string message)
         {
             var mailMessage = new MailMessage();
@@ -232,7 +253,7 @@ namespace VaccineFinder
         {
             try
             {
-                var result = client.GetAsync("http://api.zippopotam.us/us/"+ zipCode).Result;
+                var result = client.GetAsync("http://api.zippopotam.us/us/" + zipCode).Result;
                 var responseText = result.Content.ReadAsStringAsync().Result;
                 var response = JsonConvert.DeserializeObject<ZipCodeResponse>(responseText);
                 latitude = float.Parse(response.Places[0].Latitude);
